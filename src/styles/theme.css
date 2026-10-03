@@ -1,0 +1,49 @@
+/* Themes are plain CSS variables, selected by data-theme on <html>. */
+:root,
+:root[data-theme="serika"] {
+  --bg: #323437;
+  --bg-sub: #2c2e31;
+  --main: #e2b714;
+  --caret: #e2b714;
+  --sub: #646669;
+  --text: #d1d0c5;
+  --error: #ca4754;
+  --error-extra: #7e2a33;
+  color-scheme: dark;
+}
+
+:root[data-theme="carbon"] {
+  --bg: #313131;
+  --bg-sub: #2b2b2b;
+  --main: #f66e0d;
+  --caret: #f66e0d;
+  --sub: #616161;
+  --text: #f5e6c8;
+  --error: #e72d2d;
+  --error-extra: #7e2a33;
+  color-scheme: dark;
+}
+
+:root[data-theme="paper"] {
+  --bg: #eeeeee;
+  --bg-sub: #dddddd;
+  --main: #444444;
+  --caret: #444444;
+  --sub: #b2b2b2;
+  --text: #444444;
+  --error: #d70000;
+  --error-extra: #d7000080;
+  color-scheme: light;
+}
+
+:root[data-theme="phosphor"] {
+  --bg: #0b0f0a;
+  --bg-sub: #121a11;
+  --main: #ffb000;
+  --caret: #ffb000;
+  --sub: #4d5a3a;
+  --text: #9fe870;
+  --error: #ff5f4a;
+  --error-extra: #8a3226;
+  color-scheme: dark;
+}
