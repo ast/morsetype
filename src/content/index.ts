@@ -1,7 +1,7 @@
-import { englishSource } from "./words";
-import { callsignSource, hamSource, qsoSource } from "./ham";
-import { kochSource } from "./koch";
-import type { Rng, WordSource } from "./source";
+import { englishSource } from "./words.ts";
+import { callsignSource, hamSource, qsoSource } from "./ham.ts";
+import { kochSource } from "./koch.ts";
+import type { Rng, WordSource } from "./source.ts";
 
 export type SourceKind = "koch" | "english" | "ham" | "callsigns" | "qso";
 
@@ -28,4 +28,4 @@ export function createSource(opts: SourceOptions, rng: Rng = Math.random): WordS
   }
 }
 
-export type { WordSource } from "./source";
+export type { WordSource } from "./source.ts";

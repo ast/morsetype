@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { ditSeconds, PARIS_UNITS, spacing, wordTiming } from "./timing";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { ditSeconds, PARIS_UNITS, spacing, wordTiming } from "./timing.ts";
 
 describe("timing", () => {
   it("dit is 60 ms at 20 wpm", () => {

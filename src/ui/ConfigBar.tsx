@@ -1,7 +1,7 @@
-import { For, Show, type JSX } from "solid-js";
+import { For, type JSX, Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
-import { SOURCE_KINDS } from "../content";
-import { clamp, LIMITS, SECONDS, WORD_COUNTS, type Settings } from "../settings/settings";
+import { SOURCE_KINDS } from "../content/index.ts";
+import { clamp, LIMITS, SECONDS, type Settings, WORD_COUNTS } from "../settings/settings.ts";
 
 type Props = {
   settings: Settings;
@@ -11,7 +11,15 @@ type Props = {
 
 function Opt(props: { active: boolean; onClick: () => void; children: JSX.Element }) {
   return (
-    <button class="opt" classList={{ active: props.active }} onClick={(e) => { props.onClick(); e.currentTarget.blur(); }}>
+    <button
+      type="button"
+      class="opt"
+      classList={{ active: props.active }}
+      onClick={(e) => {
+        props.onClick();
+        e.currentTarget.blur();
+      }}
+    >
       {props.children}
     </button>
   );

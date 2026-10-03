@@ -1,8 +1,8 @@
-import { createEffect, createMemo, For, Show, on } from "solid-js";
-import type { Session } from "../session/session";
-import { buildDisplay } from "../session/display";
-import type { Settings } from "../settings/settings";
-import { WordView } from "./WordView";
+import { createEffect, createMemo, For, on, Show } from "solid-js";
+import type { Session } from "../session/session.ts";
+import { buildDisplay } from "../session/display.ts";
+import type { Settings } from "../settings/settings.ts";
+import { WordView } from "./WordView.tsx";
 
 /** The live copy line: graded words, the word being typed, and nothing ahead. */
 export function CopyArea(props: { session: Session; settings: Settings }) {
@@ -16,7 +16,7 @@ export function CopyArea(props: { session: Session; settings: Settings }) {
       s.sent().map((w) => w.text),
       s.typed(),
       s.endedCount(),
-    ),
+    )
   );
 
   const progress = createMemo(() => {
@@ -52,7 +52,9 @@ export function CopyArea(props: { session: Session; settings: Settings }) {
       </div>
       <Show when={s.typed().length === 0 && s.current() === ""}>
         <div class="prompt">
-          <span class="tip">listen · type what you copy · <kbd>space</kbd> after each word</span>
+          <span class="tip">
+            listen · type what you copy · <kbd>space</kbd> after each word
+          </span>
         </div>
       </Show>
     </div>

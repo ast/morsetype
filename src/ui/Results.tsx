@@ -1,16 +1,17 @@
 import { createMemo, For, Show } from "solid-js";
-import { KOCH_MAX_LESSON, kochNewChar } from "../content/koch";
-import type { Session } from "../session/session";
-import { buildDisplay } from "../session/display";
-import type { SessionResult } from "../session/results";
-import { WordView } from "./WordView";
+import { KOCH_MAX_LESSON, kochNewChar } from "../content/koch.ts";
+import type { Session } from "../session/session.ts";
+import { buildDisplay } from "../session/display.ts";
+import type { SessionResult } from "../session/results.ts";
+import { WordView } from "./WordView.tsx";
 
 export const ADVANCE_THRESHOLD = 0.9;
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function canAdvance(r: SessionResult): boolean {
-  return r.kochLesson !== null && r.kochLesson < KOCH_MAX_LESSON && r.charAccuracy >= ADVANCE_THRESHOLD;
+  return r.kochLesson !== null && r.kochLesson < KOCH_MAX_LESSON &&
+    r.charAccuracy >= ADVANCE_THRESHOLD;
 }
 
 export function Results(props: {
@@ -25,14 +26,14 @@ export function Results(props: {
       props.session.finalOps(),
       props.session.sent().map((w) => w.text),
       props.session.typed(),
-    ),
+    )
   );
   const missed = createMemo(() =>
     Object.entries(r().perChar)
       .filter(([, s]) => s.correct < s.seen)
       .map(([c, s]) => ({ c, miss: s.seen - s.correct, seen: s.seen }))
       .sort((a, b) => b.miss - a.miss)
-      .slice(0, 8),
+      .slice(0, 8)
   );
 
   return (
@@ -48,7 +49,10 @@ export function Results(props: {
         </div>
       </div>
       <div class="small-stats">
-        <Stat label="speed" value={r().effWpm < r().charWpm ? `${r().charWpm}/${r().effWpm}` : `${r().charWpm}`} />
+        <Stat
+          label="speed"
+          value={r().effWpm < r().charWpm ? `${r().charWpm}/${r().effWpm}` : `${r().charWpm}`}
+        />
         <Stat label="words" value={`${r().wordsCorrect}/${r().words}`} />
         <Stat
           label="chars"
@@ -71,12 +75,13 @@ export function Results(props: {
         </div>
       </div>
       <div class="actions">
-        <button onClick={() => props.onRestart()}>
+        <button type="button" onClick={() => props.onRestart()}>
           next test <kbd>tab</kbd>+<kbd>enter</kbd>
         </button>
         <Show when={canAdvance(r())}>
-          <button class="advance" onClick={() => props.onAdvance()}>
-            ≥ 90% · advance to lesson {r().kochLesson! + 1} (adds {kochNewChar(r().kochLesson! + 1)}) <kbd>a</kbd>
+          <button type="button" class="advance" onClick={() => props.onAdvance()}>
+            ≥ 90% · advance to lesson {r().kochLesson! + 1} (adds{" "}
+            {kochNewChar(r().kochLesson! + 1)}) <kbd>a</kbd>
           </button>
         </Show>
       </div>

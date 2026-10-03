@@ -1,4 +1,4 @@
-import { type Rng, type WordSource } from "./source";
+import { type Rng, type WordSource } from "./source.ts";
 
 /** Koch character order as used by LCWO. */
 export const KOCH_ORDER = [

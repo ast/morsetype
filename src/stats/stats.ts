@@ -1,4 +1,4 @@
-import type { SessionResult } from "../session/results";
+import type { SessionResult } from "../session/results.ts";
 
 export interface HistoryEntry {
   date: number;

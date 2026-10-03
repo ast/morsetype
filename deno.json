@@ -1,0 +1,44 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "vite",
+    "build": {
+      "command": "vite build",
+      "dependencies": ["check"]
+    },
+    "preview": "vite preview",
+    "check": "deno check",
+    "test": "deno test",
+    "ci": {
+      "command": "deno fmt --check && deno lint",
+      "dependencies": ["check", "test"]
+    }
+  },
+  "imports": {
+    "@std/expect": "jsr:@std/expect@^1",
+    "@std/testing": "jsr:@std/testing@^1",
+    "solid-js": "npm:solid-js@^1.9.15",
+    "vite": "npm:vite@^8.3.2",
+    "vite-plugin-solid": "npm:vite-plugin-solid@^2.11.14"
+  },
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext", "deno.ns"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "solid-js",
+    "types": ["vite/client"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "exclude": ["dist/"]
+  },
+  "lint": {
+    "rules": { "tags": ["recommended"] },
+    "exclude": ["dist/"]
+  },
+  "exclude": ["dist/"]
+}

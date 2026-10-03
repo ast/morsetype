@@ -1,6 +1,6 @@
 import { createMemo, For, Show } from "solid-js";
-import { KOCH_ORDER } from "../content/koch";
-import { topConfusions, type StatsData } from "../stats/stats";
+import { KOCH_ORDER } from "../content/koch.ts";
+import { type StatsData, topConfusions } from "../stats/stats.ts";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -10,7 +10,7 @@ export function StatsView(props: { stats: StatsData; onReset: () => void }) {
       const s = props.stats.chars[c];
       const acc = s && s.seen > 0 ? s.correct / s.seen : null;
       return { c, seen: s?.seen ?? 0, acc, confusions: topConfusions(props.stats, c) };
-    }),
+    })
   );
   const recent = createMemo(() => [...props.stats.history].reverse().slice(0, 25));
 
@@ -24,11 +24,9 @@ export function StatsView(props: { stats: StatsData; onReset: () => void }) {
               <div
                 class="char-cell"
                 classList={{ weak: cell.acc !== null && cell.acc < 0.9, unseen: cell.acc === null }}
-                title={
-                  cell.confusions.length
-                    ? `copied as: ${cell.confusions.map(([t, n]) => `${t}×${n}`).join(" ")}`
-                    : undefined
-                }
+                title={cell.confusions.length
+                  ? `copied as: ${cell.confusions.map(([t, n]) => `${t}×${n}`).join(" ")}`
+                  : undefined}
               >
                 <div class="c">{cell.c}</div>
                 <div class="acc">{cell.acc === null ? "–" : `${pct(cell.acc)} · ${cell.seen}`}</div>
@@ -73,6 +71,7 @@ export function StatsView(props: { stats: StatsData; onReset: () => void }) {
       </section>
       <div class="actions">
         <button
+          type="button"
           onClick={() => {
             if (confirm("Reset all stats and history?")) props.onReset();
           }}

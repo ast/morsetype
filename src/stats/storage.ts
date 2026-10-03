@@ -1,6 +1,6 @@
-import { readJson, writeJson } from "../lib/persist";
-import type { StatsData } from "./stats";
-import { emptyStats } from "./stats";
+import { readJson, writeJson } from "../lib/persist.ts";
+import type { StatsData } from "./stats.ts";
+import { emptyStats } from "./stats.ts";
 
 /** Persistence boundary for stats; a remote store can implement this later. */
 export interface StatsStore {

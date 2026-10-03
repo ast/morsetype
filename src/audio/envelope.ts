@@ -1,4 +1,4 @@
-import type { KeyInterval } from "../morse/timing";
+import type { KeyInterval } from "../morse/timing.ts";
 
 /**
  * Keying envelope rendering.

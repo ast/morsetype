@@ -1,5 +1,5 @@
 import { For, Match, Switch } from "solid-js";
-import type { DisplayWord } from "../session/display";
+import type { DisplayWord } from "../session/display.ts";
 
 export function WordView(props: { word: DisplayWord }) {
   return (
@@ -11,7 +11,11 @@ export function WordView(props: { word: DisplayWord }) {
               <span class="word pending-grade">{w().typed}</span>
             </Match>
             <Match when={w().graded}>
-              <span class="word" classList={{ wrong: !w().correct }} data-sent={w().correct ? undefined : w().sent}>
+              <span
+                class="word"
+                classList={{ wrong: !w().correct }}
+                data-sent={w().correct ? undefined : w().sent}
+              >
                 <For each={w().chars}>
                   {(c) => <span class={c.kind}>{c.kind === "miss" ? c.sent : c.typed}</span>}
                 </For>

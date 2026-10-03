@@ -1,9 +1,9 @@
 import { batch, createMemo, createSignal, onCleanup } from "solid-js";
-import type { CwEngine, Transmission } from "../audio/engine";
-import { createSource } from "../content";
-import type { Settings } from "../settings/settings";
-import { alignWords, type WordOp } from "./align";
-import { computeResult, type SessionResult } from "./results";
+import type { CwEngine, Transmission } from "../audio/engine.ts";
+import { createSource } from "../content/index.ts";
+import type { Settings } from "../settings/settings.ts";
+import { alignWords, type WordOp } from "./align.ts";
+import { computeResult, type SessionResult } from "./results.ts";
 
 export type Status = "idle" | "running" | "done";
 
@@ -126,7 +126,7 @@ export function createSession(
     const texts = words.map((w) => w.text);
     // Grade everything that was sent; leftover pending words count as missed.
     const gradedOps = alignWords(texts, typed()).map((op) =>
-      op.kind === "pending" ? { kind: "missed" as const, sent: op.sent } : op,
+      op.kind === "pending" ? { kind: "missed" as const, sent: op.sent } : op
     );
     const r = computeResult({
       sent: texts,
@@ -172,7 +172,10 @@ export function createSession(
     });
     // Copied the final word: no need to wait for the grace period.
     const last = sent().at(-1);
-    if (status() === "running" && txDone && last && typed().length >= startedCount() && now() >= last.end) {
+    if (
+      status() === "running" && txDone && last && typed().length >= startedCount() &&
+      now() >= last.end
+    ) {
       queueMicrotask(finish);
     }
   }

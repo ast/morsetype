@@ -1,4 +1,4 @@
-import { alignChars, type CharOp, type WordOp } from "./align";
+import { alignChars, type CharOp, type WordOp } from "./align.ts";
 
 export interface CharCounts {
   ok: number;
@@ -39,7 +39,11 @@ export interface ResultInput {
 }
 
 /** Character ops for any word op, treating a missed word as all-missed characters. */
-export function charOpsFor(op: WordOp, sent: readonly string[], typed: readonly string[]): CharOp[] {
+export function charOpsFor(
+  op: WordOp,
+  sent: readonly string[],
+  typed: readonly string[],
+): CharOp[] {
   switch (op.kind) {
     case "pair":
       return alignChars(sent[op.sent]!, typed[op.typed]!);

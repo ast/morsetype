@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { KOCH_MAX_LESSON, KOCH_ORDER, kochChars, kochNewChar, kochSource } from "./koch";
-import { isMorseChar } from "../morse/alphabet";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { KOCH_MAX_LESSON, KOCH_ORDER, kochChars, kochNewChar, kochSource } from "./koch.ts";
+import { isMorseChar } from "../morse/alphabet.ts";
 
 describe("koch", () => {
   it("has 41 unique sendable characters", () => {

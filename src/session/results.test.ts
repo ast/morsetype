@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { alignWords } from "./align";
-import { computeResult } from "./results";
-import { emptyStats, recordSession } from "../stats/stats";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { alignWords } from "./align.ts";
+import { computeResult } from "./results.ts";
+import { emptyStats, recordSession } from "../stats/stats.ts";
 
 describe("results", () => {
   it("scores a session with a typo and a missed word", () => {
@@ -9,7 +10,14 @@ describe("results", () => {
     const typed = ["CQ", "SM5XZY", "K"];
     const ops = alignWords(sent, typed);
     const r = computeResult({
-      sent, typed, ops, source: "qso", kochLesson: null, charWpm: 20, effWpm: 20, seconds: 10,
+      sent,
+      typed,
+      ops,
+      source: "qso",
+      kochLesson: null,
+      charWpm: 20,
+      effWpm: 20,
+      seconds: 10,
     });
     expect(r.words).toBe(4);
     expect(r.wordsCorrect).toBe(2);

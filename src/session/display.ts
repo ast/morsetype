@@ -1,8 +1,16 @@
-import type { CharOp, WordOp } from "./align";
-import { charOpsFor } from "./results";
+import type { CharOp, WordOp } from "./align.ts";
+import { charOpsFor } from "./results.ts";
 
 export type DisplayWord =
-  | { kind: "pair"; key: string; sent: string; typed: string; chars: CharOp[]; graded: boolean; correct: boolean }
+  | {
+    kind: "pair";
+    key: string;
+    sent: string;
+    typed: string;
+    chars: CharOp[];
+    graded: boolean;
+    correct: boolean;
+  }
   | { kind: "missed"; key: string; sent: string }
   | { kind: "extra"; key: string; typed: string };
 

@@ -1,4 +1,4 @@
-import { patternOf } from "./alphabet";
+import { patternOf } from "./alphabet.ts";
 
 /**
  * Morse timing per ITU-R M.1677-1 using the PARIS standard word (50 units):

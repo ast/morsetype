@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { alignChars, alignWords, editDistance } from "./align";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { alignChars, alignWords, editDistance } from "./align.ts";
 
 const kinds = (ops: { kind: string }[]) => ops.map((o) => o.kind);
 

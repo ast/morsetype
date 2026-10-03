@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { createSource, SOURCE_KINDS } from ".";
-import { isMorseChar } from "../morse/alphabet";
-import { callsign } from "./callsigns";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { createSource, SOURCE_KINDS } from "./index.ts";
+import { isMorseChar } from "../morse/alphabet.ts";
+import { callsign } from "./callsigns.ts";
 
 describe("content sources", () => {
   for (const kind of SOURCE_KINDS) {

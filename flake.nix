@@ -17,12 +17,7 @@
     {
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = with pkgs; [
-            nodejs_22
-            pnpm
-            typescript
-            typescript-language-server
-          ];
+          packages = [ pkgs.deno ];
         };
       });
     };

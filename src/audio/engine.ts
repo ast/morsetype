@@ -1,5 +1,5 @@
-import { spacing, wordTiming, type TimingParams } from "../morse/timing";
-import { effectiveRise, renderEnvelope } from "./envelope";
+import { spacing, type TimingParams, wordTiming } from "../morse/timing.ts";
+import { effectiveRise, renderEnvelope } from "./envelope.ts";
 
 /**
  * Audio graph:
@@ -88,7 +88,9 @@ export class CwEngine {
     const ctx = this.ctx;
     if (!ctx) return 0;
     const ts = ctx.getOutputTimestamp?.();
-    if (ts?.contextTime !== undefined && ts.performanceTime !== undefined && ts.performanceTime > 0) {
+    if (
+      ts?.contextTime !== undefined && ts.performanceTime !== undefined && ts.performanceTime > 0
+    ) {
       return ts.contextTime + (performance.now() - ts.performanceTime) / 1000;
     }
     return ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0);

@@ -1,7 +1,7 @@
 import { createEffect } from "solid-js";
 import { createStore, type SetStoreFunction } from "solid-js/store";
-import type { SourceKind } from "../content";
-import { readJson, writeJson } from "../lib/persist";
+import type { SourceKind } from "../content/index.ts";
+import { readJson, writeJson } from "../lib/persist.ts";
 
 export type ModeKind = "words" | "time";
 

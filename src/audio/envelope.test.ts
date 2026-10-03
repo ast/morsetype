@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { spacing, wordTiming } from "../morse/timing";
-import { effectiveRise, elementLevel, renderEnvelope } from "./envelope";
+import { describe, it } from "@std/testing/bdd";
+import { expect } from "@std/expect";
+import { spacing, wordTiming } from "../morse/timing.ts";
+import { effectiveRise, elementLevel, renderEnvelope } from "./envelope.ts";
 
 const SR = 48000;
 

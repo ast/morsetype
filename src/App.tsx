@@ -1,16 +1,16 @@
 import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
-import { CwEngine } from "./audio/engine";
-import { KOCH_MAX_LESSON } from "./content/koch";
-import { isMorseChar } from "./morse/alphabet";
-import { createSession } from "./session/session";
-import { createSettings, THEMES } from "./settings/settings";
-import { recordSession, emptyStats } from "./stats/stats";
-import { localStatsStore } from "./stats/storage";
-import { ConfigBar } from "./ui/ConfigBar";
-import { CopyArea } from "./ui/CopyArea";
-import { KochPanel } from "./ui/KochPanel";
-import { canAdvance, Results } from "./ui/Results";
-import { StatsView } from "./ui/StatsView";
+import { CwEngine } from "./audio/engine.ts";
+import { KOCH_MAX_LESSON } from "./content/koch.ts";
+import { isMorseChar } from "./morse/alphabet.ts";
+import { createSession } from "./session/session.ts";
+import { createSettings, THEMES } from "./settings/settings.ts";
+import { emptyStats, recordSession } from "./stats/stats.ts";
+import { localStatsStore } from "./stats/storage.ts";
+import { ConfigBar } from "./ui/ConfigBar.tsx";
+import { CopyArea } from "./ui/CopyArea.tsx";
+import { KochPanel } from "./ui/KochPanel.tsx";
+import { canAdvance, Results } from "./ui/Results.tsx";
+import { StatsView } from "./ui/StatsView.tsx";
 
 type View = "train" | "stats";
 
@@ -98,8 +98,8 @@ export function App() {
       }
     }
   };
-  window.addEventListener("keydown", onKeyDown);
-  onCleanup(() => window.removeEventListener("keydown", onKeyDown));
+  document.addEventListener("keydown", onKeyDown);
+  onCleanup(() => document.removeEventListener("keydown", onKeyDown));
 
   const running = () => session.status() === "running";
 
@@ -111,10 +111,15 @@ export function App() {
           morse<span class="dim">type</span>
         </div>
         <nav class="nav">
-          <button classList={{ active: view() === "train" }} onClick={() => setView("train")}>
+          <button
+            type="button"
+            classList={{ active: view() === "train" }}
+            onClick={() => setView("train")}
+          >
             train
           </button>
           <button
+            type="button"
             classList={{ active: view() === "stats" }}
             onClick={() => {
               session.stop();
@@ -151,14 +156,18 @@ export function App() {
             <CopyArea session={session} settings={settings} />
           </Match>
           <Match when={session.status() === "done" && session.result()}>
-            {(r) => <Results session={session} result={r()} onRestart={restart} onAdvance={advance} />}
+            {(r) => (
+              <Results session={session} result={r()} onRestart={restart} onAdvance={advance} />
+            )}
           </Match>
           <Match when={session.status() === "idle"}>
             <div class="prompt">
               <div>
                 press <kbd>space</kbd> to start
               </div>
-              <div class="tip">copy in your head · no paper, no counting dits · let the sound become the letter</div>
+              <div class="tip">
+                copy in your head · no paper, no counting dits · let the sound become the letter
+              </div>
             </div>
           </Match>
         </Switch>
@@ -166,14 +175,24 @@ export function App() {
 
       <footer class="footer">
         <div class="hints">
-          <span><kbd>space</kbd> start / next word</span>
-          <span><kbd>tab</kbd>+<kbd>enter</kbd> restart</span>
-          <span><kbd>esc</kbd> stop</span>
+          <span>
+            <kbd>space</kbd> start / next word
+          </span>
+          <span>
+            <kbd>tab</kbd>+<kbd>enter</kbd> restart
+          </span>
+          <span>
+            <kbd>esc</kbd> stop
+          </span>
         </div>
         <div class="themes">
           <For each={THEMES}>
             {(t) => (
-              <button classList={{ active: settings.theme === t }} onClick={() => setSettings("theme", t)}>
+              <button
+                type="button"
+                classList={{ active: settings.theme === t }}
+                onClick={() => setSettings("theme", t)}
+              >
                 {t}
               </button>
             )}

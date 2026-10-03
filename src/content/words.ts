@@ -1,5 +1,5 @@
-import { ENGLISH_COMMON } from "./wordlists/en";
-import { noRepeat, pick, type Rng, type WordSource } from "./source";
+import { ENGLISH_COMMON } from "./wordlists/en.ts";
+import { noRepeat, pick, type Rng, type WordSource } from "./source.ts";
 
 const ENGLISH = [...new Set(ENGLISH_COMMON)];
 
