@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, onCleanup } from "solid-js";
 import type { CwEngine, Transmission } from "../audio/engine.ts";
 import { createSource } from "../content/index.ts";
-import type { Settings } from "../settings/settings.ts";
+import { effectiveWpm, type Settings } from "../settings/settings.ts";
 import { alignWords, type WordOp } from "./align.ts";
 import { computeResult, type SessionResult } from "./results.ts";
 
@@ -13,6 +13,12 @@ export interface SentWord {
   start: number;
   end: number;
 }
+
+/** Settings a session runs with, fixed when it starts. */
+export type SessionConfig = Pick<
+  Settings,
+  "source" | "kochLesson" | "groupSize" | "mode" | "wordCount" | "seconds" | "charWpm" | "effWpm"
+>;
 
 /** A copied word and when its first key was pressed (heard clock). */
 interface TypedWord {
@@ -39,6 +45,7 @@ export function createSession(
   const [now, setNow] = createSignal(0);
   const [result, setResult] = createSignal<SessionResult | null>(null);
   const [finalOps, setFinalOps] = createSignal<WordOp[]>([]);
+  const [config, setConfig] = createSignal<SessionConfig | null>(null);
 
   let tx: Transmission | null = null;
   let txDone = false;
@@ -81,26 +88,33 @@ export function createSession(
     const gen = ++generation;
     await engine.ensure();
     if (gen !== generation) return;
-    engine.setTone({ pitch: settings.pitch, volume: settings.volume });
 
-    const source = createSource({
-      kind: settings.source,
+    const cfg: SessionConfig = {
+      source: settings.source,
       kochLesson: settings.kochLesson,
       groupSize: settings.groupSize,
+      mode: settings.mode,
+      wordCount: settings.wordCount,
+      seconds: settings.seconds,
+      charWpm: settings.charWpm,
+      effWpm: effectiveWpm(settings),
+    };
+    const source = createSource({
+      kind: cfg.source,
+      kochLesson: cfg.kochLesson,
+      groupSize: cfg.groupSize,
     });
-    const mode = settings.mode;
-    const wordCount = settings.wordCount;
-    const seconds = settings.seconds;
 
-    setStatus("running");
+    batch(() => {
+      setConfig(cfg);
+      setStatus("running");
+    });
     tx = engine.transmit({
       next: (index, cursor) =>
-        (mode === "words" ? index < wordCount : cursor < seconds) ? source.next() : null,
-      params: () => ({
-        charWpm: settings.charWpm,
-        effWpm: Math.min(settings.effWpm, settings.charWpm),
-        rise: settings.riseMs / 1000,
-      }),
+        (cfg.mode === "words" ? index < cfg.wordCount : cursor < cfg.seconds)
+          ? source.next()
+          : null,
+      params: () => ({ charWpm: cfg.charWpm, effWpm: cfg.effWpm, rise: settings.riseMs / 1000 }),
       onWord: (w) => setSent((s) => [...s, { text: w.text, start: w.start, end: w.end }]),
       onDone: () => {
         txDone = true;
@@ -126,12 +140,14 @@ export function createSession(
       setCurrent("");
       setResult(null);
       setFinalOps([]);
+      setConfig(null);
       setStatus("idle");
     });
   }
 
   function finish() {
-    if (status() !== "running") return;
+    const cfg = config();
+    if (status() !== "running" || !cfg) return;
     commit();
     halt();
     const words = sent();
@@ -145,10 +161,10 @@ export function createSession(
       sent: texts,
       typed: typed(),
       ops: gradedOps,
-      source: settings.source,
-      kochLesson: settings.source === "koch" ? settings.kochLesson : null,
-      charWpm: settings.charWpm,
-      effWpm: Math.min(settings.effWpm, settings.charWpm),
+      source: cfg.source,
+      kochLesson: cfg.source === "koch" ? cfg.kochLesson : null,
+      charWpm: cfg.charWpm,
+      effWpm: cfg.effWpm,
       seconds: words.length ? words.at(-1)!.end - words[0]!.start : 0,
     });
     batch(() => {
@@ -184,11 +200,12 @@ export function createSession(
       setTypedWords((t) => [...t, { text: word, at: currentAt }]);
       setCurrent("");
     });
-    // Copied the final word: no need to wait for the grace period.
+    // The final word has been copied: no need to wait for the grace period.
     const last = sent().at(-1);
+    const lastIndex = sent().length - 1;
     if (
-      status() === "running" && txDone && last && typed().length >= startedCount() &&
-      now() >= last.end
+      status() === "running" && txDone && last && now() >= last.end &&
+      ops().some((op) => op.kind === "pair" && op.sent === lastIndex)
     ) {
       queueMicrotask(finish);
     }
@@ -202,6 +219,7 @@ export function createSession(
     typed,
     current,
     result,
+    config,
     ops,
     finalOps,
     startedCount,

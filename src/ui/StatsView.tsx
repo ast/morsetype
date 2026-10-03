@@ -1,8 +1,7 @@
 import { createMemo, For, Show } from "solid-js";
 import { KOCH_ORDER } from "../content/koch.ts";
 import { type StatsData, topConfusions } from "../stats/stats.ts";
-
-const pct = (x: number) => `${Math.round(x * 100)}%`;
+import { formatSpeed, pct } from "../lib/format.ts";
 
 export function StatsView(props: { stats: StatsData; onReset: () => void }) {
   const cells = createMemo(() =>
@@ -58,7 +57,7 @@ export function StatsView(props: { stats: StatsData; onReset: () => void }) {
                   <tr>
                     <td>{new Date(h.date).toLocaleString()}</td>
                     <td>{h.source}{h.kochLesson !== null ? ` ${h.kochLesson}` : ""}</td>
-                    <td>{h.effWpm < h.charWpm ? `${h.charWpm}/${h.effWpm}` : h.charWpm}</td>
+                    <td>{formatSpeed(h)}</td>
                     <td>{h.words}</td>
                     <td>{pct(h.charAccuracy)}</td>
                     <td>{h.copyWpm.toFixed(1)}</td>

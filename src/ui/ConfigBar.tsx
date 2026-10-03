@@ -1,7 +1,14 @@
 import { For, type JSX, Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
 import { SOURCE_KINDS } from "../content/index.ts";
-import { clamp, LIMITS, SECONDS, type Settings, WORD_COUNTS } from "../settings/settings.ts";
+import {
+  clamp,
+  effectiveWpm,
+  LIMITS,
+  SECONDS,
+  type Settings,
+  WORD_COUNTS,
+} from "../settings/settings.ts";
 
 type Props = {
   settings: Settings;
@@ -33,9 +40,13 @@ function NumberField(props: {
   title?: string;
   onChange: (v: number) => void;
 }) {
-  const commit = (raw: string) => {
+  const commit = (input: HTMLInputElement) => {
+    const raw = input.value.trim();
     const v = Number(raw);
-    if (Number.isFinite(v)) props.onChange(clamp(v, props.limits));
+    if (raw !== "" && Number.isFinite(v)) props.onChange(clamp(v, props.limits));
+    // Show what was actually stored: the store may not change if the value was clamped
+    // to what it already was, or was rejected.
+    input.value = String(props.value);
   };
   return (
     <label class="field" title={props.title}>
@@ -46,7 +57,7 @@ function NumberField(props: {
         step={props.step ?? 1}
         value={props.value}
         style={{ width: `${String(props.value).length + 0.6}ch` }}
-        onChange={(e) => commit(e.currentTarget.value)}
+        onChange={(e) => commit(e.currentTarget)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === "Escape") e.currentTarget.blur();
         }}
@@ -101,12 +112,13 @@ export function ConfigBar(props: Props) {
           title="character speed (PARIS)"
           value={s().charWpm}
           limits={LIMITS.wpm}
-          onChange={(v) => props.set({ charWpm: v, effWpm: Math.min(s().effWpm, v) })}
+          onChange={(v) =>
+            props.set({ charWpm: v, effWpm: effectiveWpm({ charWpm: v, effWpm: s().effWpm }) })}
         />
         <NumberField
           label="eff"
           title="effective speed (Farnsworth); equal to wpm disables it"
-          value={Math.min(s().effWpm, s().charWpm)}
+          value={effectiveWpm(s())}
           limits={[LIMITS.wpm[0], s().charWpm]}
           onChange={(v) => props.set("effWpm", v)}
         />
@@ -137,6 +149,7 @@ export function ConfigBar(props: Props) {
             step={0.01}
             value={s().volume}
             onInput={(e) => props.set("volume", Number(e.currentTarget.value))}
+            onPointerUp={(e) => e.currentTarget.blur()}
           />
         </label>
       </div>

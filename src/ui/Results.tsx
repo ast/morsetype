@@ -4,10 +4,9 @@ import type { Session } from "../session/session.ts";
 import { buildDisplay } from "../session/display.ts";
 import type { SessionResult } from "../session/results.ts";
 import { WordView } from "./WordView.tsx";
+import { formatSpeed, pct } from "../lib/format.ts";
 
 export const ADVANCE_THRESHOLD = 0.9;
-
-const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function canAdvance(r: SessionResult): boolean {
   return r.kochLesson !== null && r.kochLesson < KOCH_MAX_LESSON &&
@@ -51,7 +50,7 @@ export function Results(props: {
       <div class="small-stats">
         <Stat
           label="speed"
-          value={r().effWpm < r().charWpm ? `${r().charWpm}/${r().effWpm}` : `${r().charWpm}`}
+          value={formatSpeed(r())}
         />
         <Stat label="words" value={`${r().wordsCorrect}/${r().words}`} />
         <Stat

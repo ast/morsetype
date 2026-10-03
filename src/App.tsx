@@ -45,11 +45,13 @@ export function App() {
 
   let tabArmed = false;
   const onKeyDown = (e: KeyboardEvent) => {
+    // Let text fields keep their keys; sliders and buttons don't take typing.
     const target = e.target as HTMLElement | null;
-    if (target?.closest("input, textarea, select")) return;
+    if (target?.closest('input:not([type="range"]), textarea, select')) return;
     if (e.metaKey || (e.ctrlKey && e.key !== "Backspace")) return;
 
-    if (e.key === "Tab") {
+    // Tab+Enter restarts during and after a test; otherwise Tab moves focus as usual.
+    if (e.key === "Tab" && view() === "train" && session.status() !== "idle") {
       e.preventDefault();
       tabArmed = true;
       return;
@@ -153,7 +155,7 @@ export function App() {
             />
           </Match>
           <Match when={session.status() === "running"}>
-            <CopyArea session={session} settings={settings} />
+            <CopyArea session={session} />
           </Match>
           <Match when={session.status() === "done" && session.result()}>
             {(r) => (

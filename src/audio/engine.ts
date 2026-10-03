@@ -44,6 +44,8 @@ export interface TransmitOptions {
 const LOOKAHEAD = 1.5;
 const TICK_MS = 50;
 const PREROLL = 0.35;
+/** Give up if the source keeps producing words with nothing to send. */
+const MAX_EMPTY_WORDS = 16;
 
 export class CwEngine {
   private ctx: AudioContext | null = null;
@@ -131,21 +133,21 @@ export class Transmission {
       return;
     }
     const horizon = this.ctx.currentTime + LOOKAHEAD - this.origin;
+    let empty = 0;
     while (!this.finished && this.cursor < horizon) {
       const text = this.opts.next(this.index, this.cursor);
-      if (text === null) {
+      if (text === null || (!this.schedule(text) && ++empty >= MAX_EMPTY_WORDS)) {
         this.finished = true;
-        break;
       }
-      this.schedule(text);
     }
   }
 
-  private schedule(text: string): void {
+  /** Schedule one word; returns false if it had nothing sendable. */
+  private schedule(text: string): boolean {
     const params = this.opts.params();
     const sp = spacing(params);
     const w = wordTiming(text, sp);
-    if (w.elements.length === 0) return;
+    if (w.elements.length === 0) return false;
 
     const start = this.cursor;
     const elements = w.elements.map((e) => ({ on: start + e.on, off: start + e.off }));
@@ -174,6 +176,7 @@ export class Transmission {
     this.lastEnd = word.end;
     this.cursor = start + w.duration + sp.wordGap;
     this.opts.onWord(word);
+    return true;
   }
 
   private finish(): void {

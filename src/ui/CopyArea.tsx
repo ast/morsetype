@@ -1,29 +1,25 @@
 import { createEffect, createMemo, For, on, Show } from "solid-js";
 import type { Session } from "../session/session.ts";
-import { buildDisplay } from "../session/display.ts";
-import type { Settings } from "../settings/settings.ts";
+import { buildDisplay, type DisplayWord, reuseUnchanged } from "../session/display.ts";
 import { WordView } from "./WordView.tsx";
 
 /** The live copy line: graded words, the word being typed, and nothing ahead. */
-export function CopyArea(props: { session: Session; settings: Settings }) {
+export function CopyArea(props: { session: Session }) {
   const s = props.session;
   let inner!: HTMLDivElement;
   let caret!: HTMLSpanElement;
 
-  const words = createMemo(() =>
-    buildDisplay(
-      s.ops(),
-      s.sent().map((w) => w.text),
-      s.typed(),
-      s.endedCount(),
-    )
-  );
+  const words = createMemo<DisplayWord[]>((prev) =>
+    reuseUnchanged(
+      prev,
+      buildDisplay(s.ops(), s.sent().map((w) => w.text), s.typed(), s.endedCount()),
+    ), []);
 
   const progress = createMemo(() => {
-    if (props.settings.mode === "time") {
-      return String(Math.max(0, Math.ceil(props.settings.seconds - s.elapsed())));
-    }
-    return `${s.startedCount()}/${props.settings.wordCount}`;
+    const cfg = s.config();
+    if (!cfg) return "";
+    if (cfg.mode === "time") return String(Math.max(0, Math.ceil(cfg.seconds - s.elapsed())));
+    return `${s.startedCount()}/${cfg.wordCount}`;
   });
 
   // Keep the caret on the second visible line, monkeytype style.

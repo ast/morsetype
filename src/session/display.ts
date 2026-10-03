@@ -52,3 +52,26 @@ export function buildDisplay(
   }
   return out;
 }
+
+function sameWord(a: DisplayWord, b: DisplayWord): boolean {
+  if (a.key !== b.key) return false;
+  if (a.kind === "pair" && b.kind === "pair") {
+    return a.typed === b.typed && a.sent === b.sent && a.graded === b.graded;
+  }
+  return true;
+}
+
+/**
+ * Reuse unchanged words from the previous display, so keyed rendering (Solid's
+ * `<For>` matches by identity) only touches words that actually changed.
+ */
+export function reuseUnchanged(
+  prev: readonly DisplayWord[],
+  next: DisplayWord[],
+): DisplayWord[] {
+  const byKey = new Map(prev.map((w) => [w.key, w]));
+  return next.map((w) => {
+    const old = byKey.get(w.key);
+    return old && sameWord(old, w) ? old : w;
+  });
+}
