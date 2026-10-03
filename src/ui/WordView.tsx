@@ -25,7 +25,12 @@ export function WordView(props: { word: DisplayWord }) {
         )}
       </Match>
       <Match when={props.word.kind === "missed" && props.word}>
-        {(w) => <span class="word missed">{w().sent}</span>}
+        {(w) => (
+          // Shown like a wrong word in which every character was missed.
+          <span class="word wrong missed" title="missed">
+            <For each={[...w().sent]}>{(c) => <span class="miss">{c}</span>}</For>
+          </span>
+        )}
       </Match>
       <Match when={props.word.kind === "extra" && props.word}>
         {(w) => (

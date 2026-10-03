@@ -14,6 +14,12 @@ export interface SentWord {
   end: number;
 }
 
+/** A copied word and when its first key was pressed (heard clock). */
+interface TypedWord {
+  text: string;
+  at: number;
+}
+
 /** After the last word: minimum wait, and quiet time after the last keystroke. */
 const END_GRACE = 2.5;
 const KEY_GRACE = 1.5;
@@ -27,7 +33,8 @@ export function createSession(
 ) {
   const [status, setStatus] = createSignal<Status>("idle");
   const [sent, setSent] = createSignal<SentWord[]>([]);
-  const [typed, setTyped] = createSignal<string[]>([]);
+  const [typedWords, setTypedWords] = createSignal<TypedWord[]>([]);
+  const typed = createMemo(() => typedWords().map((w) => w.text));
   const [current, setCurrent] = createSignal("");
   const [now, setNow] = createSignal(0);
   const [result, setResult] = createSignal<SessionResult | null>(null);
@@ -37,6 +44,7 @@ export function createSession(
   let txDone = false;
   let raf = 0;
   let lastKey = 0;
+  let currentAt = 0;
   let generation = 0;
 
   const countWhere = (pred: (w: SentWord) => boolean) => sent().filter(pred).length;
@@ -51,8 +59,12 @@ export function createSession(
     return o === null ? 0 : Math.max(0, now() - o);
   });
 
-  const sentTexts = createMemo(() => sent().slice(0, startedCount()).map((w) => w.text));
-  const ops = createMemo<WordOp[]>(() => alignWords(sentTexts(), typed()));
+  const heardWords = createMemo(() => sent().slice(0, startedCount()));
+  const ops = createMemo<WordOp[]>(() =>
+    alignWords(heardWords().map((w) => w.text), typed(), {
+      timing: { sent: heardWords(), typed: typedWords().map((w) => w.at) },
+    })
+  );
 
   function tick() {
     setNow(engine.heardTime());
@@ -110,7 +122,7 @@ export function createSession(
     lastKey = 0;
     batch(() => {
       setSent([]);
-      setTyped([]);
+      setTypedWords([]);
       setCurrent("");
       setResult(null);
       setFinalOps([]);
@@ -124,10 +136,11 @@ export function createSession(
     halt();
     const words = sent();
     const texts = words.map((w) => w.text);
-    // Grade everything that was sent; leftover pending words count as missed.
-    const gradedOps = alignWords(texts, typed()).map((op) =>
-      op.kind === "pending" ? { kind: "missed" as const, sent: op.sent } : op
-    );
+    // Grade everything that was sent; uncopied words at the end count as missed.
+    const gradedOps = alignWords(texts, typed(), {
+      final: true,
+      timing: { sent: words, typed: typedWords().map((w) => w.at) },
+    });
     const r = computeResult({
       sent: texts,
       typed: typed(),
@@ -153,6 +166,7 @@ export function createSession(
   function type(char: string) {
     if (status() !== "running") return;
     touch();
+    if (current() === "") currentAt = lastKey;
     setCurrent((c) => c + char);
   }
 
@@ -167,7 +181,7 @@ export function createSession(
     if (word === "") return;
     touch();
     batch(() => {
-      setTyped((t) => [...t, word]);
+      setTypedWords((t) => [...t, { text: word, at: currentAt }]);
       setCurrent("");
     });
     // Copied the final word: no need to wait for the grace period.

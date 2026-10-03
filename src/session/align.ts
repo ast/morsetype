@@ -66,52 +66,142 @@ export function alignChars(sent: string, typed: string): CharOp[] {
   return ops.reverse();
 }
 
-/** Cost of pairing two words: 0 when equal, 2 when completely different. */
-function pairCost(sent: string, typed: string): number {
+/** Cost of pairing two words by content: 0 when equal, 2 when completely different. */
+function contentCost(sent: string, typed: string): number {
   const len = Math.max(sent.length, typed.length);
   return len === 0 ? 0 : (2 * editDistance(sent, typed)) / len;
 }
 
-const GAP = 1;
+/** When words were heard and typed, on one clock (seconds). */
+export interface AlignTiming {
+  /** Start and end of each sent word. */
+  sent: readonly { start: number; end: number }[];
+  /** Time of the first keystroke of each typed word. */
+  typed: readonly number[];
+}
+
+export interface AlignCosts {
+  /** A sent word with no copy before the last copied word. */
+  missed: number;
+  /** A typed word that matches nothing. */
+  extra: number;
+  /** A sent word after the last copied word, already fully heard when that word was started. */
+  pending: number;
+  /** Words of copy-behind that are considered normal. */
+  freeLag: number;
+  /** Cost per word of copy-behind beyond `freeLag`. */
+  lag: number;
+}
 
 /**
- * Align typed words to sent words. Unmatched sent words after the last
- * paired word cost nothing (the operator may simply be behind) and are
- * reported as `pending`.
+ * Tuned with a simulated copier (missed words and runs of misses, typos, junk
+ * words, copy-behind up to 4 s) over Koch, English and callsign content:
+ * a pending cost near `missed` makes recovery after a miss immediate, while
+ * staying below it keeps slow copiers from being marked as missing words.
  */
-export function alignWords(sent: readonly string[], typed: readonly string[]): WordOp[] {
+export const DEFAULT_COSTS: AlignCosts = {
+  missed: 1,
+  extra: 1,
+  pending: 0.8,
+  freeLag: 2,
+  lag: 0.5,
+};
+
+export interface AlignOptions {
+  timing?: AlignTiming;
+  /** Session over: trailing uncopied words are missed, not pending. */
+  final?: boolean;
+  costs?: AlignCosts;
+}
+
+/** Number of sent words fully heard at time t (sent words are in time order). */
+function heardBy(sent: AlignTiming["sent"], t: number): number {
+  let lo = 0;
+  let hi = sent.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sent[mid]!.end <= t) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * Align typed words to sent words with a Needleman–Wunsch style DP.
+ *
+ * Content decides most pairings, and timing breaks the ties that content alone
+ * cannot: a word cannot be copied before it starts, and copying a word long
+ * after several newer words have been heard is unlikely. Sent words after the
+ * last copied word are `pending` (the operator may just be behind). They are
+ * not free, though, or pairing a copy with an older, missed word would always
+ * look cheaper than admitting the miss.
+ */
+export function alignWords(
+  sent: readonly string[],
+  typed: readonly string[],
+  opts: AlignOptions = {},
+): WordOp[] {
+  const c = opts.costs ?? DEFAULT_COSTS;
+  const timing = opts.timing;
   const m = sent.length;
   const n = typed.length;
+
+  const heard = timing ? typed.map((_, j) => heardBy(timing.sent, timing.typed[j]!)) : [];
+  const pairCost = (i: number, j: number): number => {
+    let cost = contentCost(sent[i]!, typed[j]!);
+    if (timing) {
+      const t = timing.typed[j]!;
+      if (timing.sent[i]!.start > t) return Infinity;
+      const lag = Math.max(0, heard[j]! - (i + 1));
+      cost += c.lag * Math.max(0, lag - c.freeLag);
+    }
+    return cost;
+  };
+
   const d: number[][] = Array.from({ length: m + 1 }, () => new Array<number>(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) d[i]![0] = i * GAP;
-  for (let j = 0; j <= n; j++) d[0]![j] = j * GAP;
+  for (let i = 0; i <= m; i++) d[i]![0] = i * c.missed;
+  for (let j = 0; j <= n; j++) d[0]![j] = j * c.extra;
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
       d[i]![j] = Math.min(
-        d[i - 1]![j - 1]! + pairCost(sent[i - 1]!, typed[j - 1]!),
-        d[i - 1]![j]! + GAP,
-        d[i]![j - 1]! + GAP,
+        d[i - 1]![j - 1]! + pairCost(i - 1, j - 1),
+        d[i - 1]![j]! + c.missed,
+        d[i]![j - 1]! + c.extra,
       );
     }
   }
 
-  // Free trailing sent gaps: end at the best row; ties prefer copying further.
+  // Cost of leaving sent word k uncopied after the last copied word.
+  const lastTyped = timing && n > 0 ? timing.typed[n - 1]! : Infinity;
+  const trailing = (k: number): number => {
+    if (opts.final) return c.missed;
+    if (timing && n > 0) return timing.sent[k]!.end <= lastTyped ? c.pending : 0;
+    return c.pending;
+  };
+  const tail = new Array<number>(m + 1).fill(0);
+  for (let k = m - 1; k >= 0; k--) tail[k] = tail[k + 1]! + trailing(k);
+
+  // Choose where copying ends; ties prefer copying further.
   let end = 0;
-  for (let i = 1; i <= m; i++) if (d[i]![n]! <= d[end]![n]! + 1e-9) end = i;
+  for (let i = 1; i <= m; i++) {
+    if (d[i]![n]! + tail[i]! <= d[end]![n]! + tail[end]! + 1e-9) end = i;
+  }
 
   const ops: WordOp[] = [];
-  for (let k = m - 1; k >= end; k--) ops.push({ kind: "pending", sent: k });
+  for (let k = m - 1; k >= end; k--) {
+    ops.push(opts.final ? { kind: "missed", sent: k } : { kind: "pending", sent: k });
+  }
 
   let i = end;
   let j = n;
   const eq = (x: number, y: number) => Math.abs(x - y) < 1e-9;
   while (i > 0 || j > 0) {
     const here = d[i]![j]!;
-    if (i > 0 && j > 0 && eq(here, d[i - 1]![j - 1]! + pairCost(sent[i - 1]!, typed[j - 1]!))) {
+    if (i > 0 && j > 0 && eq(here, d[i - 1]![j - 1]! + pairCost(i - 1, j - 1))) {
       ops.push({ kind: "pair", sent: i - 1, typed: j - 1 });
       i--;
       j--;
-    } else if (i > 0 && eq(here, d[i - 1]![j]! + GAP)) {
+    } else if (i > 0 && eq(here, d[i - 1]![j]! + c.missed)) {
       ops.push({ kind: "missed", sent: i - 1 });
       i--;
     } else {

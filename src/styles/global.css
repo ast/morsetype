@@ -269,6 +269,11 @@ input:focus-visible {
   text-underline-offset: 0.2em;
 }
 
+/* A missed word is underlined as a whole; no per-character underline. */
+.word.missed .miss {
+  text-decoration: none;
+}
+
 .word .extra {
   color: var(--error-extra);
 }
@@ -288,13 +293,6 @@ input:focus-visible {
   font-size: 0.5em;
   line-height: 1;
   color: var(--sub);
-}
-
-.word.missed {
-  color: var(--sub);
-  opacity: 0.55;
-  text-decoration: line-through;
-  text-decoration-color: var(--error);
 }
 
 .word.current {
