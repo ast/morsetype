@@ -81,13 +81,17 @@ src/
 
 ## Keys
 
-| Key             | Action                                   |
-| --------------- | ---------------------------------------- |
-| `space`         | start a test / commit the current word   |
-| `backspace`     | delete a character (`ctrl` = whole word) |
-| `tab` + `enter` | restart                                  |
-| `esc`           | stop                                     |
-| `a`             | advance Koch lesson (results, ≥ 90 %)    |
+| Key                                         | Action                                 |
+| ------------------------------------------- | -------------------------------------- |
+| `space`, `enter`, `ctrl-m`, `ctrl-j`        | start a test / commit the current word |
+| `backspace`, `ctrl-h`                       | delete a character                     |
+| `ctrl-backspace`, `alt-backspace`, `ctrl-w` | delete the current word                |
+| `tab` + `enter`                             | restart                                |
+| `esc`, `ctrl-g`, `ctrl-[`                   | stop                                   |
+| `a`                                         | advance Koch lesson (results, ≥ 90 %)  |
+
+Browsers keep `ctrl-w` for closing the tab; it only reaches the page in an app window (e.g. an
+installed PWA). `ctrl-[` is matched by physical key, as in a terminal.
 
 ## Roadmap
 

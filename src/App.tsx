@@ -1,6 +1,7 @@
 import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { CwEngine } from "./audio/engine.ts";
 import { KOCH_MAX_LESSON } from "./content/koch.ts";
+import { normalizeKey } from "./lib/keys.ts";
 import { isMorseChar } from "./morse/alphabet.ts";
 import { createSession } from "./session/session.ts";
 import { createSettings, THEMES } from "./settings/settings.ts";
@@ -48,15 +49,19 @@ export function App() {
     // Let text fields keep their keys; sliders and buttons don't take typing.
     const target = e.target as HTMLElement | null;
     if (target?.closest('input:not([type="range"]), textarea, select')) return;
-    if (e.metaKey || (e.ctrlKey && e.key !== "Backspace")) return;
+    const k = normalizeKey(e);
+    if (!k) return;
+    // Our control chords never fall through to the browser (Ctrl+H history, Ctrl+G find…).
+    if (e.ctrlKey) e.preventDefault();
+    const key = k.key;
 
     // Tab+Enter restarts during and after a test; otherwise Tab moves focus as usual.
-    if (e.key === "Tab" && view() === "train" && session.status() !== "idle") {
+    if (key === "Tab" && view() === "train" && session.status() !== "idle") {
       e.preventDefault();
       tabArmed = true;
       return;
     }
-    if (e.key === "Enter" && tabArmed) {
+    if (key === "Enter" && tabArmed) {
       e.preventDefault();
       tabArmed = false;
       restart();
@@ -65,35 +70,35 @@ export function App() {
     tabArmed = false;
 
     if (view() === "stats") {
-      if (e.key === "Escape") setView("train");
+      if (key === "Escape") setView("train");
       return;
     }
 
     const status = session.status();
     if (status === "idle" || status === "done") {
-      if (e.key === " " || e.key === "Enter") {
+      if (key === " " || key === "Enter") {
         e.preventDefault();
         (document.activeElement as HTMLElement | null)?.blur();
         restart();
-      } else if (status === "done" && e.key.toLowerCase() === "a") {
+      } else if (status === "done" && key.toLowerCase() === "a") {
         advance();
-      } else if (e.key === "Escape") {
+      } else if (key === "Escape") {
         session.stop();
       }
       return;
     }
 
     // running
-    if (e.key === "Escape") {
+    if (key === "Escape") {
       session.stop();
-    } else if (e.key === " " || e.key === "Enter") {
+    } else if (key === " " || key === "Enter") {
       e.preventDefault();
       session.commit();
-    } else if (e.key === "Backspace") {
+    } else if (key === "Backspace") {
       e.preventDefault();
-      session.backspace(e.ctrlKey || e.altKey);
-    } else if (e.key.length === 1) {
-      const c = e.key.toUpperCase();
+      session.backspace(k.word);
+    } else if (key.length === 1) {
+      const c = key.toUpperCase();
       if (isMorseChar(c)) {
         e.preventDefault();
         session.type(c);
