@@ -186,6 +186,14 @@ export function createSession(
     setCurrent((c) => c + char);
   }
 
+  /** Replace the word being typed, after the browser edited it natively. */
+  function edit(text: string) {
+    if (status() !== "running" || text === current()) return;
+    touch();
+    if (current() === "") currentAt = lastKey;
+    setCurrent(text);
+  }
+
   function backspace(word = false) {
     if (status() !== "running") return;
     touch();
@@ -230,6 +238,7 @@ export function createSession(
     stop: reset,
     finish,
     type,
+    edit,
     backspace,
     commit,
   };

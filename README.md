@@ -90,8 +90,10 @@ src/
 | `esc`, `ctrl-g`, `ctrl-[`                   | stop                                   |
 | `a`                                         | advance Koch lesson (results, ≥ 90 %)  |
 
-Browsers keep `ctrl-w` for closing the tab; it only reaches the page in an app window (e.g. an
-installed PWA). `ctrl-[` is matched by physical key, as in a terminal.
+Copy goes into a hidden text field, so the platform's own editing keys work too. With Firefox and
+the GTK Emacs key theme, `ctrl-w` and `ctrl-u` work in a normal tab; elsewhere browsers may keep
+`ctrl-w` for closing the tab, so use `ctrl-backspace` / `alt-backspace`. `ctrl-[` is matched by
+physical key, as in a terminal.
 
 ## Roadmap
 

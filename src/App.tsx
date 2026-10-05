@@ -1,8 +1,9 @@
-import { createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
+import { batch, createEffect, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { CwEngine } from "./audio/engine.ts";
 import { KOCH_MAX_LESSON } from "./content/koch.ts";
 import { normalizeKey } from "./lib/keys.ts";
 import { isMorseChar } from "./morse/alphabet.ts";
+import { parseCopyInput } from "./session/copyInput.ts";
 import { createSession } from "./session/session.ts";
 import { createSettings, THEMES } from "./settings/settings.ts";
 import { emptyStats, recordSession } from "./stats/stats.ts";
@@ -32,8 +33,34 @@ export function App() {
   });
   createEffect(() => engine.setTone({ pitch: settings.pitch, volume: settings.volume }));
 
+  // Copy goes through a hidden input so the platform's own editing keys work
+  // (e.g. ctrl-w / ctrl-u in Firefox with the GTK Emacs key theme).
+  let copyInput!: HTMLInputElement;
+  const onCopyInput = (e: InputEvent) => {
+    if (e.isComposing) return;
+    if (session.status() !== "running") {
+      copyInput.value = "";
+      return;
+    }
+    const { commits, current } = parseCopyInput(copyInput.value);
+    batch(() => {
+      for (const word of commits) {
+        session.edit(word);
+        session.commit();
+      }
+      session.edit(current);
+    });
+    // Write the normalised word back, even when the session state didn't change.
+    copyInput.value = session.current();
+  };
+  createEffect(() => {
+    const text = session.current();
+    if (copyInput.value !== text) copyInput.value = text;
+  });
+
   const restart = () => {
     setView("train");
+    copyInput.focus();
     void session.start();
   };
 
@@ -48,7 +75,7 @@ export function App() {
   const onKeyDown = (e: KeyboardEvent) => {
     // Let text fields keep their keys; sliders and buttons don't take typing.
     const target = e.target as HTMLElement | null;
-    if (target?.closest('input:not([type="range"]), textarea, select')) return;
+    if (target?.closest('input:not([type="range"]):not(.copy-input), textarea, select')) return;
     const k = normalizeKey(e);
     if (!k) return;
     // Our control chords never fall through to the browser (Ctrl+H history, Ctrl+G find…).
@@ -88,16 +115,18 @@ export function App() {
       return;
     }
 
-    // running
+    // running: keys typed into the copy input reach the session through onCopyInput.
+    const inCopy = target === copyInput;
+    if (!inCopy) copyInput.focus();
     if (key === "Escape") {
       session.stop();
-    } else if (key === " " || key === "Enter") {
+    } else if (key === "Enter" || (key === " " && !inCopy)) {
       e.preventDefault();
       session.commit();
     } else if (key === "Backspace") {
       e.preventDefault();
       session.backspace(k.word);
-    } else if (key.length === 1) {
+    } else if (key.length === 1 && !inCopy) {
       const c = key.toUpperCase();
       if (isMorseChar(c)) {
         e.preventDefault();
@@ -148,6 +177,16 @@ export function App() {
       </div>
 
       <main class="stage">
+        <input
+          ref={copyInput}
+          class="copy-input"
+          aria-label="copy"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck={false}
+          tabIndex={-1}
+          onInput={onCopyInput}
+        />
         <Switch>
           <Match when={view() === "stats"}>
             <StatsView
@@ -175,6 +214,28 @@ export function App() {
               <div class="tip">
                 copy in your head · no paper, no counting dits · let the sound become the letter
               </div>
+              <dl class="keys">
+                <dt>
+                  <kbd>space</kbd> <kbd>ctrl-m</kbd>
+                </dt>
+                <dd>commit word</dd>
+                <dt>
+                  <kbd>bksp</kbd> <kbd>ctrl-h</kbd>
+                </dt>
+                <dd>delete character</dd>
+                <dt>
+                  <kbd>alt-bksp</kbd> <kbd>ctrl-w</kbd>
+                </dt>
+                <dd>delete word</dd>
+                <dt>
+                  <kbd>tab</kbd>+<kbd>enter</kbd>
+                </dt>
+                <dd>restart</dd>
+                <dt>
+                  <kbd>esc</kbd> <kbd>ctrl-g</kbd>
+                </dt>
+                <dd>stop</dd>
+              </dl>
             </div>
           </Match>
         </Switch>

@@ -196,6 +196,7 @@ input:focus-visible {
 
 /* copy area */
 .stage {
+  position: relative;
   align-self: center;
   width: 100%;
   min-height: 12rem;
@@ -319,6 +320,19 @@ input:focus-visible {
   }
 }
 
+/* Focused during a test so copy gets the platform's native editing keys. */
+.copy-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .prompt {
   text-align: center;
   color: var(--sub);
@@ -338,6 +352,26 @@ input:focus-visible {
 .prompt .tip {
   font-size: 0.85rem;
   opacity: 0.8;
+}
+
+.prompt .keys {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 0.15rem 1rem;
+  margin: 1.5rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.prompt .keys dt {
+  text-align: right;
+}
+
+.prompt .keys dd {
+  margin: 0;
+  text-align: left;
 }
 
 /* results */
