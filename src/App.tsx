@@ -76,6 +76,12 @@ export function App() {
     // Let text fields keep their keys; sliders and buttons don't take typing.
     const target = e.target as HTMLElement | null;
     if (target?.closest('input:not([type="range"]):not(.copy-input), textarea, select')) return;
+    // The copy caret is only drawn at the end of the word, so put the real one there
+    // before any key, ours or the browser's, acts on it.
+    if (target === copyInput && !e.isComposing) {
+      const end = copyInput.value.length;
+      copyInput.setSelectionRange(end, end);
+    }
     const k = normalizeKey(e);
     if (!k) return;
     // Our control chords never fall through to the browser (Ctrl+H history, Ctrl+G find…).
@@ -108,6 +114,8 @@ export function App() {
         (document.activeElement as HTMLElement | null)?.blur();
         restart();
       } else if (status === "done" && key.toLowerCase() === "a") {
+        // Keep the key out of the copy input, which the new test is about to read.
+        e.preventDefault();
         advance();
       } else if (key === "Escape") {
         session.stop();
@@ -224,7 +232,7 @@ export function App() {
                 </dt>
                 <dd>delete character</dd>
                 <dt>
-                  <kbd>alt-bksp</kbd> <kbd>ctrl-w</kbd>
+                  <kbd>alt-bksp</kbd> <kbd>ctrl-bksp</kbd>
                 </dt>
                 <dd>delete word</dd>
                 <dt>
