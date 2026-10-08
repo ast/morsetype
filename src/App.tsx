@@ -181,7 +181,7 @@ export function App() {
                 <HamPanel settings={settings} set={setSettings} />
               </Match>
               <Match when={settings.source === "book"}>
-                <BookPanel settings={settings} set={setSettings} />
+                <BookPanel settings={settings} />
               </Match>
             </Switch>
           </Show>

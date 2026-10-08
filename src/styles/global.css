@@ -161,6 +161,46 @@ input:focus-visible {
   margin: 0;
 }
 
+.field.select {
+  position: relative;
+  padding-right: 1.1rem;
+}
+
+.field select {
+  font: inherit;
+  color: var(--main);
+  background: var(--bg-sub);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.field select option,
+.field select optgroup {
+  color: var(--text);
+  background: var(--bg-sub);
+}
+
+/* dropdown arrow */
+.field.select::after {
+  content: "";
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  margin-top: -2px;
+  border: 4px solid transparent;
+  border-top-color: var(--sub);
+  pointer-events: none;
+}
+
+.panel .title {
+  color: var(--text);
+}
+
 .field input[type="range"] {
   width: 4.5rem;
   accent-color: var(--main);

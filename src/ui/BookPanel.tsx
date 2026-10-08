@@ -1,17 +1,15 @@
-import { createSignal, For, Show } from "solid-js";
-import type { SetStoreFunction } from "solid-js/store";
-import { bookById, BOOKS } from "../content/books/catalog.ts";
+import { createEffect, createSignal, on, Show } from "solid-js";
+import { bookById } from "../content/books/catalog.ts";
 import { loadBook } from "../content/books/index.ts";
 import { splitWords } from "../content/books/prepare.ts";
 import { getPosition, setPosition } from "../content/books/progress.ts";
 import type { Settings } from "../settings/settings.ts";
-import { Opt } from "./Opt.tsx";
 
 /**
- * Pick a book and see how far you have read. Mounted only while no session runs, so the
- * saved position can simply be read on mount and after each change.
+ * How far you have read in the chosen book. Mounted only while no session runs, so the saved
+ * position can simply be read when the panel appears or the book changes.
  */
-export function BookPanel(props: { settings: Settings; set: SetStoreFunction<Settings> }) {
+export function BookPanel(props: { settings: Settings }) {
   const [position, setPos] = createSignal(getPosition(props.settings.book));
   const [size, setSize] = createSignal<number | null>(null);
 
@@ -22,12 +20,7 @@ export function BookPanel(props: { settings: Settings; set: SetStoreFunction<Set
       if (id === props.settings.book) setSize(splitWords(text).length);
     }, () => {});
   };
-  refresh(props.settings.book);
-
-  const choose = (id: string) => {
-    props.set("book", id);
-    refresh(id);
-  };
+  createEffect(on(() => props.settings.book, refresh));
   const move = (index: number) => {
     setPosition(props.settings.book, index);
     setPos(index);
@@ -36,13 +29,7 @@ export function BookPanel(props: { settings: Settings; set: SetStoreFunction<Set
 
   return (
     <div class="panel book">
-      <span class="opts">
-        <For each={BOOKS}>
-          {(b) => (
-            <Opt active={props.settings.book === b.id} onClick={() => choose(b.id)}>{b.short}</Opt>
-          )}
-        </For>
-      </span>
+      <span class="title">{book()?.title} · {book()?.author}</span>
       <span class="hint" title={`${book()?.title ?? ""} — ${book()?.author ?? ""}`}>
         <Show when={size() !== null} fallback={`word ${position().toLocaleString()}`}>
           word {position().toLocaleString()} / {size()!.toLocaleString()} ·{" "}

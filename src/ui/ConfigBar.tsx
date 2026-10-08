@@ -1,6 +1,5 @@
 import { For, Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
-import { SOURCE_KINDS } from "../content/index.ts";
 import {
   clamp,
   effectiveWpm,
@@ -10,6 +9,7 @@ import {
   WORD_COUNTS,
 } from "../settings/settings.ts";
 import { Opt } from "./Opt.tsx";
+import { SourceSelect } from "./SourceSelect.tsx";
 
 type Props = {
   settings: Settings;
@@ -57,13 +57,7 @@ export function ConfigBar(props: Props) {
   return (
     <div class="config" classList={{ dimmed: props.dimmed }}>
       <div class="group">
-        <For each={SOURCE_KINDS}>
-          {(k) => (
-            <Opt active={s().source === k} onClick={() => props.set("source", k)}>
-              {k}
-            </Opt>
-          )}
-        </For>
+        <SourceSelect settings={props.settings} set={props.set} />
       </div>
       <div class="group">
         <Opt active={s().mode === "words"} onClick={() => props.set("mode", "words")}>words</Opt>

@@ -1,10 +1,7 @@
-import { For, Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
-import { CONTEST_KINDS, CONTEST_LABELS } from "../content/contest.ts";
 import { sanitizeCall, type Settings } from "../settings/settings.ts";
-import { Opt } from "./Opt.tsx";
 
-/** Options for the QSO and contest sources: your callsign, and which contest. */
+/** Option for the QSO and contest sources: your callsign. */
 export function HamPanel(props: { settings: Settings; set: SetStoreFunction<Settings> }) {
   const commit = (input: HTMLInputElement) => {
     props.set("myCall", sanitizeCall(input.value));
@@ -12,20 +9,6 @@ export function HamPanel(props: { settings: Settings; set: SetStoreFunction<Sett
   };
   return (
     <div class="panel">
-      <Show when={props.settings.source === "contest"}>
-        <span class="opts">
-          <For each={CONTEST_KINDS}>
-            {(k) => (
-              <Opt
-                active={props.settings.contest === k}
-                onClick={() => props.set("contest", k)}
-              >
-                {CONTEST_LABELS[k]}
-              </Opt>
-            )}
-          </For>
-        </span>
-      </Show>
       <label
         class="field"
         title={props.settings.source === "contest"
