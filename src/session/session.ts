@@ -1,11 +1,15 @@
 import { batch, createMemo, createSignal, onCleanup } from "solid-js";
 import type { CwEngine, Transmission } from "../audio/engine.ts";
-import { createSource } from "../content/index.ts";
+import { bookSource } from "../content/books/book.ts";
+import { loadBook } from "../content/books/index.ts";
+import { splitWords } from "../content/books/prepare.ts";
+import { getPosition, setPosition } from "../content/books/progress.ts";
+import { createSource, type WordSource } from "../content/index.ts";
 import { effectiveWpm, type Settings } from "../settings/settings.ts";
 import { alignWords, type WordOp } from "./align.ts";
 import { computeResult, type SessionResult } from "./results.ts";
 
-export type Status = "idle" | "running" | "done";
+export type Status = "idle" | "loading" | "running" | "done";
 
 /** A sent word with its start/end on the AudioContext clock. */
 export interface SentWord {
@@ -17,7 +21,17 @@ export interface SentWord {
 /** Settings a session runs with, fixed when it starts. */
 export type SessionConfig = Pick<
   Settings,
-  "source" | "kochLesson" | "groupSize" | "mode" | "wordCount" | "seconds" | "charWpm" | "effWpm"
+  | "source"
+  | "kochLesson"
+  | "groupSize"
+  | "myCall"
+  | "contest"
+  | "book"
+  | "mode"
+  | "wordCount"
+  | "seconds"
+  | "charWpm"
+  | "effWpm"
 >;
 
 /** A copied word and when its first key was pressed (heard clock). */
@@ -29,6 +43,24 @@ interface TypedWord {
 /** After the last word: minimum wait, and quiet time after the last keystroke. */
 const END_GRACE = 2.5;
 const KEY_GRACE = 1.5;
+/**
+ * Once the word count or time is up, sources with natural units (a QSO phrase, a sentence) run
+ * on to the next boundary, but no further than this many words, or 25% over in time mode.
+ */
+const MAX_OVERRUN_WORDS = 12;
+const MAX_OVERRUN_TIME = 1.25;
+
+/** How a session is recorded in the stats history. */
+export function sourceLabel(cfg: SessionConfig): string {
+  switch (cfg.source) {
+    case "contest":
+      return `contest ${cfg.contest}`;
+    case "book":
+      return `book ${cfg.book}`;
+    default:
+      return cfg.source;
+  }
+}
 
 export type Session = ReturnType<typeof createSession>;
 
@@ -53,6 +85,9 @@ export function createSession(
   let lastKey = 0;
   let currentAt = 0;
   let generation = 0;
+  /** Book reading position when the session started, for saving progress. */
+  let bookStart = 0;
+  let bookSize = 0;
 
   const countWhere = (pred: (w: SentWord) => boolean) => sent().filter(pred).length;
   /** Words whose first element has been heard. */
@@ -93,27 +128,64 @@ export function createSession(
       source: settings.source,
       kochLesson: settings.kochLesson,
       groupSize: settings.groupSize,
+      myCall: settings.myCall,
+      contest: settings.contest,
+      book: settings.book,
       mode: settings.mode,
       wordCount: settings.wordCount,
       seconds: settings.seconds,
       charWpm: settings.charWpm,
       effWpm: effectiveWpm(settings),
     };
-    const source = createSource({
-      kind: cfg.source,
-      kochLesson: cfg.kochLesson,
-      groupSize: cfg.groupSize,
-    });
+
+    let source: WordSource;
+    if (cfg.source === "book") {
+      // The text is a separate chunk, fetched on first use.
+      setStatus("loading");
+      let text: string;
+      try {
+        text = await loadBook(cfg.book);
+      } catch (e) {
+        // Only this attempt failed: a restart in the meantime owns the session now.
+        if (gen === generation) {
+          console.error(e);
+          reset();
+        }
+        return;
+      }
+      if (gen !== generation) return;
+      bookStart = getPosition(cfg.book);
+      const book = bookSource(splitWords(text), bookStart);
+      bookSize = book.size();
+      bookStart = book.position();
+      source = book;
+    } else {
+      source = createSource({
+        kind: cfg.source,
+        kochLesson: cfg.kochLesson,
+        groupSize: cfg.groupSize,
+        myCall: cfg.myCall,
+        contest: cfg.contest,
+      });
+    }
 
     batch(() => {
       setConfig(cfg);
       setStatus("running");
     });
+    let overrun = 0;
     tx = engine.transmit({
-      next: (index, cursor) =>
-        (cfg.mode === "words" ? index < cfg.wordCount : cursor < cfg.seconds)
-          ? source.next()
-          : null,
+      next: (index, cursor) => {
+        const due = cfg.mode === "words" ? index >= cfg.wordCount : cursor >= cfg.seconds;
+        if (!due) return source.next();
+        // Finish the phrase or sentence, within limits.
+        const canRunOn = source.atBoundary !== undefined && !source.atBoundary() &&
+          overrun < MAX_OVERRUN_WORDS &&
+          (cfg.mode === "words" || cursor < cfg.seconds * MAX_OVERRUN_TIME);
+        if (!canRunOn) return null;
+        overrun++;
+        return source.next();
+      },
       params: () => ({ charWpm: cfg.charWpm, effWpm: cfg.effWpm, rise: settings.riseMs / 1000 }),
       onWord: (w) => setSent((s) => [...s, { text: w.text, start: w.start, end: w.end }]),
       onDone: () => {
@@ -121,6 +193,13 @@ export function createSession(
       },
     });
     raf = requestAnimationFrame(tick);
+  }
+
+  /** Remember how far into the book the session got (only what was actually heard). */
+  function saveProgress() {
+    const cfg = config();
+    if (!cfg || cfg.source !== "book" || bookSize === 0) return;
+    setPosition(cfg.book, (bookStart + endedCount()) % bookSize);
   }
 
   function halt() {
@@ -131,6 +210,7 @@ export function createSession(
   }
 
   function reset() {
+    saveProgress();
     halt();
     txDone = false;
     lastKey = 0;
@@ -149,6 +229,7 @@ export function createSession(
     const cfg = config();
     if (status() !== "running" || !cfg) return;
     commit();
+    saveProgress();
     halt();
     const words = sent();
     const texts = words.map((w) => w.text);
@@ -161,7 +242,7 @@ export function createSession(
       sent: texts,
       typed: typed(),
       ops: gradedOps,
-      source: cfg.source,
+      source: sourceLabel(cfg),
       kochLesson: cfg.source === "koch" ? cfg.kochLesson : null,
       charWpm: cfg.charWpm,
       effWpm: cfg.effWpm,

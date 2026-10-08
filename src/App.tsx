@@ -8,7 +8,9 @@ import { createSession } from "./session/session.ts";
 import { createSettings, THEMES } from "./settings/settings.ts";
 import { emptyStats, recordSession } from "./stats/stats.ts";
 import { localStatsStore } from "./stats/storage.ts";
+import { BookPanel } from "./ui/BookPanel.tsx";
 import { ConfigBar } from "./ui/ConfigBar.tsx";
+import { HamPanel } from "./ui/HamPanel.tsx";
 import { CopyArea } from "./ui/CopyArea.tsx";
 import { KochPanel } from "./ui/KochPanel.tsx";
 import { canAdvance, Results } from "./ui/Results.tsx";
@@ -170,8 +172,18 @@ export function App() {
       <div>
         <Show when={view() === "train"}>
           <ConfigBar settings={settings} set={setSettings} dimmed={running()} />
-          <Show when={settings.source === "koch" && !running()}>
-            <KochPanel settings={settings} set={setSettings} />
+          <Show when={!running()}>
+            <Switch>
+              <Match when={settings.source === "koch"}>
+                <KochPanel settings={settings} set={setSettings} />
+              </Match>
+              <Match when={settings.source === "qso" || settings.source === "contest"}>
+                <HamPanel settings={settings} set={setSettings} />
+              </Match>
+              <Match when={settings.source === "book"}>
+                <BookPanel settings={settings} set={setSettings} />
+              </Match>
+            </Switch>
           </Show>
         </Show>
       </div>
@@ -206,6 +218,9 @@ export function App() {
               <Results session={session} result={r()} onRestart={restart} onAdvance={advance} />
             )}
           </Match>
+          <Match when={session.status() === "loading"}>
+            <div class="prompt">loading book…</div>
+          </Match>
           <Match when={session.status() === "idle"}>
             <div class="prompt">
               <div>
@@ -213,6 +228,9 @@ export function App() {
               </div>
               <div class="tip">
                 copy in your head · no paper, no counting dits · let the sound become the letter
+              </div>
+              <div class="tip">
+                prosigns: <kbd>=</kbd> BT · <kbd>+</kbd> AR · <kbd>(</kbd> KN · <kbd>&lt;</kbd> SK
               </div>
               <dl class="keys">
                 <dt>

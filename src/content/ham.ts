@@ -1,6 +1,5 @@
-import { normalize } from "../morse/alphabet.ts";
 import { callsign } from "./callsigns.ts";
-import { noRepeat, pick, randInt, type Rng, type WordSource } from "./source.ts";
+import { noRepeat, pick, type Rng, type WordSource } from "./source.ts";
 
 export const Q_CODES = [
   "QRL",
@@ -99,7 +98,7 @@ export function callsignSource(rng: Rng): WordSource {
   return noRepeat(() => callsign(rng));
 }
 
-const NAMES = [
+export const NAMES = [
   "JOHN",
   "BOB",
   "BILL",
@@ -134,7 +133,7 @@ const NAMES = [
   "JOE",
 ];
 
-const QTHS = [
+export const QTHS = [
   "STOCKHOLM",
   "LONDON",
   "PARIS",
@@ -163,7 +162,7 @@ const QTHS = [
   "RIGA",
 ];
 
-const RIGS = [
+export const RIGS = [
   "IC7300",
   "K3",
   "KX2",
@@ -177,43 +176,4 @@ const RIGS = [
   "HOMEBREW",
 ];
 
-const ANTENNAS = ["DIPOLE", "VERT", "YAGI", "EFHW", "LOOP", "WIRE", "GP", "INV V", "LW"];
-
-/**
- * Generates realistic rag-chew style exchanges, one QSO at a time, and hands
- * them out word by word.
- */
-export function qsoSource(rng: Rng): WordSource {
-  let queue: string[] = [];
-
-  const exchange = (): string => {
-    const a = callsign(rng);
-    const b = callsign(rng);
-    const rst = pick(["599", "579", "569", "559", "449", "5NN", "339"], rng);
-    const pwr = pick(["5W", "10W", "50W", "100W", "500W", "1KW"], rng);
-    const part = randInt(0, 4, rng);
-    switch (part) {
-      case 0:
-        return `CQ CQ CQ DE ${a} ${a} K`;
-      case 1:
-        return `${a} DE ${b} GM ES TNX FER CALL UR RST ${rst} ${rst} BK`;
-      case 2:
-        return `${b} DE ${a} R TNX NAME ${pick(NAMES, rng)} QTH ${
-          pick(QTHS, rng)
-        } HW CPY ${b} DE ${a} K`;
-      case 3:
-        return `RIG ${pick(RIGS, rng)} PWR ${pwr} ANT ${pick(ANTENNAS, rng)} WX ${
-          pick(["SUNNY", "RAIN", "CLOUDY", "SNOW", "COLD", "WARM"], rng)
-        } TEMP ${randInt(0, 30, rng)}C`;
-      default:
-        return `TNX FER FB QSO ${pick(NAMES, rng)} HPE CUL 73 ${b} DE ${a} TU`;
-    }
-  };
-
-  return {
-    next() {
-      if (queue.length === 0) queue = exchange().split(/\s+/).map(normalize).filter(Boolean);
-      return queue.shift()!;
-    },
-  };
-}
+export const ANTENNAS = ["DIPOLE", "VERT", "YAGI", "EFHW", "LOOP", "WIRE", "GP", "INVV", "LW"];

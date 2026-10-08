@@ -5,6 +5,7 @@ import { buildDisplay } from "../session/display.ts";
 import type { SessionResult } from "../session/results.ts";
 import { WordView } from "./WordView.tsx";
 import { formatSpeed, pct } from "../lib/format.ts";
+import { charLabel } from "../morse/alphabet.ts";
 
 export const ADVANCE_THRESHOLD = 0.9;
 
@@ -63,7 +64,7 @@ export function Results(props: {
           <Stat label="lesson" value={String(r().kochLesson)} />
         </Show>
         <Show when={missed().length > 0}>
-          <Stat label="missed chars" value={missed().map((m) => m.c).join(" ")} />
+          <Stat label="missed chars" value={missed().map((m) => charLabel(m.c)).join(" ")} />
         </Show>
       </div>
       <div class="review">
@@ -80,7 +81,7 @@ export function Results(props: {
         <Show when={canAdvance(r())}>
           <button type="button" class="advance" onClick={() => props.onAdvance()}>
             ≥ 90% · advance to lesson {r().kochLesson! + 1} (adds{" "}
-            {kochNewChar(r().kochLesson! + 1)}) <kbd>a</kbd>
+            {charLabel(kochNewChar(r().kochLesson! + 1))}) <kbd>a</kbd>
           </button>
         </Show>
       </div>

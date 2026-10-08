@@ -45,4 +45,12 @@ describe("timing", () => {
     expect(w.chars.map((c) => c.char)).toEqual(["A", "N"]);
     expect(w.duration / d).toBeCloseTo(13, 9);
   });
+
+  it("sends prosigns as one run-together character", () => {
+    const sp = spacing({ charWpm: 20, effWpm: 20 });
+    expect(wordTiming("+", sp).elements).toHaveLength(5); // <AR> .-.-.
+    expect(wordTiming("<", sp).elements).toHaveLength(6); // <SK> ...-.-
+    expect(wordTiming("(", sp).elements).toHaveLength(5); // <KN> -.--.
+    expect(wordTiming("=", sp).chars).toHaveLength(1);
+  });
 });

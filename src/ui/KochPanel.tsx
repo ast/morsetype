@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
 import { KOCH_MAX_LESSON, KOCH_MIN_LESSON, kochChars } from "../content/koch.ts";
+import { charLabel } from "../morse/alphabet.ts";
 import { clamp, LIMITS, type Settings } from "../settings/settings.ts";
 
 export function KochPanel(props: { settings: Settings; set: SetStoreFunction<Settings> }) {
@@ -34,7 +35,9 @@ export function KochPanel(props: { settings: Settings; set: SetStoreFunction<Set
       <span class="chars">
         <For each={chars()}>
           {(c, i) => (
-            <span classList={{ new: i() === chars().length - 1 && lesson() > 1 }}>{c}</span>
+            <span classList={{ new: i() === chars().length - 1 && lesson() > 1 }}>
+              {charLabel(c)}
+            </span>
           )}
         </For>
       </span>

@@ -1,7 +1,10 @@
 import { createEffect } from "solid-js";
 import { createStore, type SetStoreFunction } from "solid-js/store";
+import { BOOK_IDS, DEFAULT_BOOK } from "../content/books/catalog.ts";
+import { CONTEST_KINDS, type ContestKind } from "../content/contest.ts";
 import { SOURCE_KINDS, type SourceKind } from "../content/index.ts";
 import { KOCH_MAX_LESSON, KOCH_MIN_LESSON } from "../content/koch.ts";
+import { normalize } from "../morse/alphabet.ts";
 import { readJson, writeJson } from "../lib/persist.ts";
 
 export type ModeKind = "words" | "time";
@@ -21,6 +24,10 @@ export interface Settings {
   source: SourceKind;
   kochLesson: number;
   groupSize: number;
+  /** Your callsign for QSO/contest sources; empty means both sides are sent. */
+  myCall: string;
+  contest: ContestKind;
+  book: string;
   mode: ModeKind;
   wordCount: number;
   seconds: number;
@@ -36,6 +43,9 @@ export const DEFAULT_SETTINGS: Settings = {
   source: "koch",
   kochLesson: 1,
   groupSize: 5,
+  myCall: "",
+  contest: "cqww",
+  book: DEFAULT_BOOK,
   mode: "words",
   wordCount: 25,
   seconds: 60,
@@ -47,6 +57,7 @@ export const LIMITS = {
   pitch: [300, 1200],
   riseMs: [1, 15],
   groupSize: [2, 8],
+  myCallLength: 12,
 } as const;
 
 const KEY = "morsetype.settings.v1";
@@ -58,6 +69,11 @@ export function clamp(v: number, [min, max]: readonly [number, number]): number 
 /** Effective speed, never above the character speed. */
 export function effectiveWpm(s: Pick<Settings, "charWpm" | "effWpm">): number {
   return Math.min(s.effWpm, s.charWpm);
+}
+
+/** A callsign as it can be sent: uppercase, Morse characters only, bounded length. */
+export function sanitizeCall(raw: unknown): string {
+  return typeof raw === "string" ? normalize(raw).slice(0, LIMITS.myCallLength) : "";
 }
 
 /** Validate stored settings, falling back to defaults for anything missing or out of range. */
@@ -81,6 +97,9 @@ export function sanitizeSettings(raw: unknown): Settings {
     source: oneOf("source", SOURCE_KINDS),
     kochLesson: Math.round(num("kochLesson", [KOCH_MIN_LESSON, KOCH_MAX_LESSON])),
     groupSize: Math.round(num("groupSize", LIMITS.groupSize)),
+    myCall: sanitizeCall(r.myCall),
+    contest: oneOf("contest", CONTEST_KINDS),
+    book: oneOf("book", BOOK_IDS),
     mode: oneOf<ModeKind>("mode", ["words", "time"]),
     wordCount: oneOf("wordCount", WORD_COUNTS),
     seconds: oneOf("seconds", SECONDS),

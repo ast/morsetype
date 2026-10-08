@@ -15,6 +15,9 @@ describe("sanitizeSettings", () => {
       groupSize: 0,
       kochLesson: 99,
       source: "nope",
+      myCall: " sm7xyz/p!! ",
+      contest: "nope",
+      book: "nope",
       wordCount: 7,
       volume: NaN,
       theme: "carbon",
@@ -24,6 +27,9 @@ describe("sanitizeSettings", () => {
     expect(s.groupSize).toBe(2);
     expect(s.kochLesson).toBe(40);
     expect(s.source).toBe(DEFAULT_SETTINGS.source);
+    expect(s.myCall).toBe("SM7XYZ/P");
+    expect(s.contest).toBe(DEFAULT_SETTINGS.contest);
+    expect(s.book).toBe(DEFAULT_SETTINGS.book);
     expect(s.wordCount).toBe(DEFAULT_SETTINGS.wordCount);
     expect(s.volume).toBe(DEFAULT_SETTINGS.volume);
     expect(s.theme).toBe("carbon");

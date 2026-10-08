@@ -19,6 +19,7 @@ deno task check     # type check
 deno task build     # check, then static site in dist/
 deno task ci        # fmt --check, lint, check, test — run before committing
 deno fmt            # format (lineWidth 100)
+deno task books     # re-download and prepare the Gutenberg texts (outputs are committed)
 
 deno test src/session/align.test.ts               # single file
 deno test --filter "pairs identical copy"         # single test by name
@@ -63,8 +64,20 @@ words as `pending`; `finish()` re-aligns with `final: true` so they count as `mi
 turns ops into a `SessionResult`; `stats/stats.ts` folds results into persisted per-character stats.
 
 **Content** (`src/content/`): each source is a `WordSource` (`next(): string`) taking an injectable
-`Rng` for deterministic tests. Koch uses LCWO character order with the newest character weighted up.
-Adding a source means extending `SourceKind`/`SOURCE_KINDS` and the `createSource` switch.
+`Rng` for deterministic tests (`seededRng`). Sources must emit `normalize()`d words: sent text is
+stored raw and alignment is exact. Koch uses LCWO character order with the newest character weighted
+up. Adding a source means extending `SourceKind`/`SOURCE_KINDS` and the `createSource` switch.
+Sources with natural units (`qso.ts` phrases between `<BT>`s, `contest.ts` overs, book sentences)
+implement `atBoundary()`; the session then runs on past the word/time limit to the next boundary
+(bounded by `MAX_OVERRUN_WORDS` / `MAX_OVERRUN_TIME`). `scriptSource` plays such unit lists back.
+`qso.ts`/`contest.ts` generate whole QSOs with consistent personas; with `settings.myCall` set only
+the other station is sent. Books live in `books/`: `prepare.ts` is the pure text→words step shared
+by `scripts/fetch-books.ts` and tests, `texts/*.txt` are committed outputs, `index.ts` loads them
+lazily via `import.meta.glob` (browser only — never import it from tests), and `progress.ts`
+persists the reading position (saved by the session from what was actually heard).
+
+**Prosigns** are single characters in `MORSE` (`=` BT, `+` AR, `(` KN, `<` SK), typed as such and
+shown via `charLabel()` as `<AR>` etc. `KOCH_ORDER` does not include the three new ones.
 
 **Persistence**: all localStorage goes through `src/lib/persist.ts` (`readJson`/`writeJson`, which
 never throw). Settings are a Solid store auto-saved and clamped/validated on load

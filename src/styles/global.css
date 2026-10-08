@@ -194,6 +194,58 @@ input:focus-visible {
   color: var(--text);
 }
 
+/* source panels (qso/contest, book) */
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--sub);
+  margin-top: 0.75rem;
+}
+
+.panel .opts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.panel .hint {
+  opacity: 0.8;
+}
+
+.panel .step {
+  padding: 0 0.35rem;
+}
+
+.panel .step:hover {
+  color: var(--text);
+}
+
+.field input.call {
+  font: inherit;
+  width: 7ch;
+  color: var(--main);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--bg);
+  text-transform: uppercase;
+}
+
+.field input.call::placeholder {
+  color: var(--sub);
+  opacity: 0.6;
+  text-transform: none;
+}
+
+.prosign {
+  font-size: 0.7em;
+  letter-spacing: 0;
+}
+
 /* copy area */
 .stage {
   position: relative;

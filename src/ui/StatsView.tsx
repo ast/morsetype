@@ -1,11 +1,14 @@
 import { createMemo, For, Show } from "solid-js";
 import { KOCH_ORDER } from "../content/koch.ts";
+import { charLabel, MORSE } from "../morse/alphabet.ts";
 import { type StatsData, topConfusions } from "../stats/stats.ts";
 import { formatSpeed, pct } from "../lib/format.ts";
 
 export function StatsView(props: { stats: StatsData; onReset: () => void }) {
+  // Koch order first, then the characters outside it (prosigns).
+  const order = [...KOCH_ORDER, ...Object.keys(MORSE).filter((c) => !KOCH_ORDER.includes(c))];
   const cells = createMemo(() =>
-    KOCH_ORDER.map((c) => {
+    order.map((c) => {
       const s = props.stats.chars[c];
       const acc = s && s.seen > 0 ? s.correct / s.seen : null;
       return { c, seen: s?.seen ?? 0, acc, confusions: topConfusions(props.stats, c) };
@@ -24,10 +27,12 @@ export function StatsView(props: { stats: StatsData; onReset: () => void }) {
                 class="char-cell"
                 classList={{ weak: cell.acc !== null && cell.acc < 0.9, unseen: cell.acc === null }}
                 title={cell.confusions.length
-                  ? `copied as: ${cell.confusions.map(([t, n]) => `${t}×${n}`).join(" ")}`
+                  ? `copied as: ${
+                    cell.confusions.map(([t, n]) => `${charLabel(t)}×${n}`).join(" ")
+                  }`
                   : undefined}
               >
-                <div class="c">{cell.c}</div>
+                <div class="c">{charLabel(cell.c)}</div>
                 <div class="acc">{cell.acc === null ? "–" : `${pct(cell.acc)} · ${cell.seen}`}</div>
                 <div class="bar">
                   <div style={{ width: cell.acc === null ? "0" : pct(cell.acc) }} />

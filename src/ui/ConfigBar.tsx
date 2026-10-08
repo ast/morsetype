@@ -1,4 +1,4 @@
-import { For, type JSX, Show } from "solid-js";
+import { For, Show } from "solid-js";
 import type { SetStoreFunction } from "solid-js/store";
 import { SOURCE_KINDS } from "../content/index.ts";
 import {
@@ -9,28 +9,13 @@ import {
   type Settings,
   WORD_COUNTS,
 } from "../settings/settings.ts";
+import { Opt } from "./Opt.tsx";
 
 type Props = {
   settings: Settings;
   set: SetStoreFunction<Settings>;
   dimmed: boolean;
 };
-
-function Opt(props: { active: boolean; onClick: () => void; children: JSX.Element }) {
-  return (
-    <button
-      type="button"
-      class="opt"
-      classList={{ active: props.active }}
-      onClick={(e) => {
-        props.onClick();
-        e.currentTarget.blur();
-      }}
-    >
-      {props.children}
-    </button>
-  );
-}
 
 function NumberField(props: {
   label: string;
